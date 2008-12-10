@@ -47,6 +47,7 @@ class postgres::bundled{
         single_exec {"create_ovirt_db":
         	command => "/bin/su - postgres -c '/usr/bin/createdb ovirt'",
                 require => Exec[initialize_db]
+		require => Exec[postgres_add_all_trust]
 	}
 
 	single_exec {"create_ovirt_development_db":
