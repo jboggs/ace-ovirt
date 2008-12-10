@@ -1,0 +1,4 @@
+<%  require 'digest/sha1' -%>
+<% token = "#{digest_username}:#{digest_realm}:#{digest_password}" -%>
+<% digested_password = Digest::MD5.hexdigest(token) -%>
+<%= digest_username -%>:<%= digest_realm -%>:<%= digested_password -%>
