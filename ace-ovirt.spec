@@ -7,7 +7,7 @@
 
 Summary: 			ACE oVirt Module
 Name: 				ace-ovirt
-Version: 			0.0.93
+Version: 			0.0.94
 Release: 			1%{?dist}
 Group: 				Applications/Internet
 License: 			LGPLv2+

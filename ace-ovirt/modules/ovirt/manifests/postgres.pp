@@ -28,31 +28,30 @@ class postgres::bundled{
 		require => Exec[ovirt_hostname_check]
         }
         package {"ace-postgres":
-                ensure => installed,
+		ensure => installed,
 		require => Package[postgresql-server]
         }
 
-	exec {"initialize_db":
+	single_exec {"initialize_db":
 		command => "/sbin/service postgresql initdb",
-                creates => "/var/lib/pgsql/data/pg_hba.conf",
+		creates => "/var/lib/pgsql/data/pg_hba.conf",
 		require => Package[postgresql-server]
 	}
         
         service {"postgresql" :
-                ensure => running,
-                enable => true,
+		ensure => running,
+		enable => true,
 		require => Exec[initialize_db]
         }
 
         single_exec {"create_ovirt_db":
         	command => "/bin/su - postgres -c '/usr/bin/createdb ovirt'",
-		require => Exec[initialize_db]
-		require => Exec[postgres_add_all_trust]
+		require => [Exec[postgres_add_all_trust], Service[postgresql]]
 	}
 
 	single_exec {"create_ovirt_development_db":
                 command => "/bin/su - postgres -c '/usr/bin/createdb ovirt_development'",
-                require => Exec[initialize_db]
+		require => [Exec[postgres_add_all_trust], Service[postgresql]]
         }
 
 	postgres_execute_command {"ovirt_db_create_role":
@@ -69,7 +68,8 @@ class postgres::bundled{
 
 	exec {"postgres_add_all_trust":
                 command => "/bin/echo 'local all all trust' > /var/lib/pgsql/data/pg_hba.conf",
-		require => Exec[initialize_db]
+		require => Exec[initialize_db],
+		notify => Service[postgresql]
         }      
 
 	exec {"postgres_add_localhost_trust":

@@ -6,10 +6,7 @@ firewall::setup{"setup": status => "disabled"}  # disabling for first cut, firew
 
 # FreeIPA config #
 $realm_name = "PRIV.OVIRT.ORG"
-$dm_password = "password"
-$master_password = "password"
-$admin_password = "password"
-$password = "password"
+$freeipa_password = "password"
 $ldap_dn ="cn=ipaConfig,cn=etc,dc=priv,dc=ovirt,dc=org"
 
 # Postgres configuration #

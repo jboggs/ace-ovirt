@@ -18,15 +18,7 @@
 # Author: Joey Boggs <jboggs@redhat.com>
 #--
 
-class dns::dns_check {
-
-        exec {"ovirt_hostname_check":
-	command => "/bin/ping -c 1 $fqdn",
-	require => [Service[dnsmasq],File["/etc/dnsmasq.d/ovirt-dnsmasq.conf"],Single_exec["add_dns_server_to_resolv.conf"]]
-        }
-}
-
-class dns::bundled {
+class dns::bundled { (mgmt_ipaddr="", prov_ipaddr="")
 
 	package {"dnsmasq":
 		ensure => installed,
@@ -36,36 +28,25 @@ class dns::bundled {
 	service {"dnsmasq" :
                 ensure => running,
                 enable => true,
-		require => File["/etc/dnsmasq.d/ovirt-dnsmasq.conf"]
+		require => File["/etc/dnsmasq.d/ovirt-dns.conf"]
         }
 
-        file {"/etc/dnsmasq.d/ovirt-dnsmasq.conf":
-                content => template("ovirt/ovirt-dnsmasq.conf.erb"),
+        file {"/etc/dnsmasq.d/ovirt-dns.conf":
+                content => template("ovirt/ovirt-dns.conf.erb"),
                 mode => 644,
 		notify => Service[dnsmasq],
 		require => Package[dnsmasq]
         }
 
 	single_exec {"add_dns_server_to_resolv.conf":
-		command => "/bin/sed -e '1i nameserver $management_dns_server' -i /etc/resolv.conf",
+		command => "/bin/sed -e '1i nameserver $prov_ipaddr' -i /etc/resolv.conf",
 		require => Single_exec["add_dns_server_to_etc_hosts"]
 	}
 
-	single_exec {"add_dns_server_to_etc_hosts":
-		command => "/bin/echo $management_dns_server $fqdn >> /etc/hosts",
+	single_exec {"add_mgmt_server_to_etc_hosts":
+		command => "/bin/echo $mgmt_ipaddr $ipa_host >> /etc/hosts",
 		notify => Service[dnsmasq]
 	}
-	single_exec {"dns_entries":
-                command => "/usr/share/ace/modules/ovirt/files/dns_entries.sh $dhcp_start $dhcp_stop $dhcp_network $dhcp_domain",
-	require => Single_exec["add_dns_server_to_etc_hosts"]
-	}
-
-#       firewall_rule {"dns": destination_port => "53"}
-#	firewall_rule {"tftpd": destination_port => '69', protocol => 'udp'}
-#	firewall_rule {"dhcpd": destination_port => '68', protocol => 'udp'}
-#	firewall_rule {"bootp": destination_port => '67', protocol => 'udp'}
-	include dns::dns_check
-
 }
 
 class dns::remote {
@@ -85,7 +66,5 @@ class dns::remote {
 
 # Also A records must be present for each oVirt node. Without this they are unable
 # to determine their hostname and locate the management server.
-
-include dns::dns_check
 
 }
