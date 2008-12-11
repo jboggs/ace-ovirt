@@ -1,0 +1,9 @@
+interface=<%= dhcp_interface %>
+dhcp-range=<%= dhcp_network %>.<%= dhcp_start %>,<%= dhcp_network%>.<%= dhcp_stop %>
+domain=<%= dhcp_domain %>
+dhcp-option=option:router,<%= prov_network_gateway %>
+dhcp-option=option:ntp-server,<%= ntp_server %>
+dhcp-option=12
+no-resolv
+local=/<%= dhcp_domain %>/
+server=<%= management_dns_server %>

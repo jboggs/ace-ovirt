@@ -1,0 +1,241 @@
+#!/usr/bin/ruby
+#-- 
+##  Copyright (C) 2008 Red Hat Inc.
+##  
+##  This library is free software; you can redistribute it and/or
+##  modify it under the terms of the GNU Lesser General Public
+##  License as published by the Free Software Foundation; either
+##  version 2.1 of the License, or (at your option) any later version.
+##  
+##  This library is distributed in the hope that it will be useful,
+##  but WITHOUT ANY WARRANTY; without even the implied warranty of
+##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+##  Lesser General Public License for more details.
+##  
+##  You should have received a copy of the GNU Lesser General Public
+##  License along with this library; if not, write to the Free Software
+##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+##
+## Author: Joey Boggs <jboggs@redhat.com>
+##--
+## oVirt Installation Script
+
+require 'socket'
+
+config_file = File.new("/usr/share/ace/modules/ovirt/ovirt-install.pp", "w")
+config_file.write "import 'ovirt'\n"
+config_file.write "import 'firewall'\n\n"
+config_file.write "firewall::setup{'setup': status => 'disabled'}\n\n"
+
+dev_ct = 0
+net_devs = `hal-find-by-capability --capability net`
+net_devs.each_line{ |dev|
+dev_ct = dev_ct + 1
+}
+
+if dev_ct <= 2 
+puts "Unable to install without a network interface"
+exit
+
+elsif dev_ct == 3
+puts "Only 1 network devices detected, defaulting to eth0 for management and provisioning"
+mgmt_dev = "eth0"
+prov_dev = "eth0"
+
+elsif dev_ct > 3
+puts ""
+get_net_devs = `hal-find-by-capability --capability net`
+puts "Below are the detected networking devices\n\n"
+puts "mac address           interface        ip address"
+net_devs.each_line{ |dev|
+dev = dev.chomp
+interface = `hal-get-property --udi #{dev} --key net.interface`
+mac = `hal-get-property --udi #{dev} --key net.address`
+ip = `ifconfig #{interface}`
+ipaddr = ip.scan(/\s*inet addr:([\d.]+)/)
+puts mac.chop + "   :   " + interface.chop   +  "    :    " + ipaddr.to_s if interface.chop != "lo"
+}
+end
+
+puts "\nDo you want separate management and provisioning networks? (y/n)"
+sep_networks = gets.chomp
+while sep_networks != "y" and sep_networks != "n"
+puts "Invalid choice"
+puts "Do you want separate management and provisioning networks? (y/n)"
+end
+
+if sep_networks == "y"
+puts "Input your management interface (eth0)"
+mgmt_dev = gets.chomp
+
+puts "Input your provisioning interface, this may also be your management interface (eth1)"
+prov_dev = gets.chomp
+
+elsif sep_networks == "n"
+puts "Input your management/provisioning interface (eth1)"
+mgmt_dev = gets.chomp
+prov_dev = mgmt_dev
+end
+
+puts "Enter the hostname of the oVirt management server (management.example.com)"
+ovirt_host = gets.chomp
+ipa_host = ovirt_host
+
+puts "\nUse this system's dns servers (y/n)"
+File.open('/etc/resolv.conf').each_line{ |line|
+  line = line.chomp
+puts line if line =~ /nameserver/ and line !~ /nameserver 127.0.0.1/
+}
+dns_servers = gets.chomp
+
+while dns_servers != "y" and dns_servers != "n"
+puts "Invalid choice"
+dns_servers = gets.chomp
+end
+
+mgmt_ip = `ifconfig #{prov_dev}`
+mgmt_ipaddr= mgmt_ip.scan(/\s*inet addr:([\d.]+)/)
+prov_ip = `ifconfig #{prov_dev}`
+prov_ipaddr= prov_ip.scan(/\s*inet addr:([\d.]+)/)
+
+if dns_servers == "n"
+config_file.write "# dns configuration\n"
+config_file.write "$mgmt_ipaddr = '#{mgmt_ipaddr}'\n"
+config_file.write "$prov_ipaddr = '#{prov_ipaddr}'\n"
+config_file.write "$ovirt_host = '#{ovirt_host}'\n"
+config_file.write "$ipa_host = '#{ipa_host}'\n\n"
+config_file.write "dns::bundled{setup: mgmt_ipaddr=>'$mgmt_ipaddr', prov_ipaddr=> '$prov_ipaddr'}\n\n"
+end
+
+if dns_servers == "y"
+host_lookup = Socket.getaddrinfo(ipa_host,nil)
+hostip = host_lookup[1][3]
+if hostip.to_s != mgmt_ipaddr.to_s
+puts "Reverse dns lookup for #{ipa_host} failed, exiting"
+exit
+end
+end
+
+puts "Does you management network already have dhcp? (y/n)"
+dhcp_setup = gets.chomp
+while dhcp_setup != "y" and dhcp_setup != "n"
+puts "Invalid choice"
+dhcp_setup = gets.chomp
+end
+
+if dhcp_setup == "n"
+
+puts "DHCP Configuration\n"
+config_file.write "# dhcp configuration\n"
+dhcp_interface = prov_dev
+config_file.write "$dhcp_interface = '#{dhcp_interface}'\n"
+
+puts "Enter the first 3 octets of the dhcp network you wish to use (192.168.50)"
+dhcp_network = gets.chomp
+config_file.write "$dhcp_network = '#{dhcp_network}'\n"
+
+puts "Enter the dhcp pool start address (3)"
+dhcp_start = gets.chomp
+config_file.write "$dhcp_start = '#{dhcp_start}'\n"
+
+puts "Enter the dhcp pool end addess (100)"
+dhcp_stop = gets.chomp
+config_file.write "$dhcp_stop = '#{dhcp_stop}'\n"
+
+puts "Enter the dhcp domain you wish to use (example.com)"
+dhcp_domain = gets.chomp
+config_file.write "$dhcp_domain = '#{dhcp_domain}'\n"
+
+config_file.write "$ntp_server = '#{mgmt_ipaddr}'\n\n"
+
+puts "Provide pxe/tftp capability? (y/n)"
+tftp_setup = gets.chomp
+
+if sep_networks == "y"
+prov_ip = `ifconfig #{prov_dev}`
+prov_dns_server = prov_ip.scan(/\s*inet addr:([\d.]+)/)
+config_file.write "$prov_dns_server = '#{prov_dns_server}'"
+
+puts "Enter the network gateway for your provisioning network (192.168.50.254)"
+prov_network_gateway = gets.chomp
+config_file.write "$prov_network_gateway = '#{prov_network_gateway}'\n"
+end
+end
+
+# Cobbler Configuration
+puts "Do you have a cobbler already that you wish to use? (y/n)"
+cobbler_setup = gets.chomp
+
+while cobbler_setup != "y" and cobbler_setup != "n"
+puts "Invalid choice"
+cobbler_setup = gets.chomp
+end
+
+cobbler_config = "n"
+
+
+if cobbler_setup == "y"
+puts "Enter the hostname of your cobbler server"
+cobbler_hostname = gets.chomp
+puts "Enter your cobbler username"
+cobbler_user_name= gets.chomp
+puts "Enter your cobbler user password"
+cobbler_user_password = gets.chomp
+
+elsif cobbler_setup == "n"
+cobbler_hostname = "localhost"
+puts "We will setup a cobbler instance, please provide the following information"
+puts "Enter your cobbler username"
+cobbler_user_name= gets.chomp
+puts "Enter your cobbler user password"
+cobbler_user_password = gets.chomp
+end
+
+config_file.write "# cobbler configuration\n"
+config_file.write "$cobbler_hostname = '#{cobbler_hostname}'\n"
+config_file.write "$cobbler_user_name = '#{cobbler_user_name}'\n"
+config_file.write "$cobbler_user_password = '#{cobbler_user_password}'\n\n"
+
+
+# Postgres Configuration
+puts "Enter a password for the ovirt postgres account"
+db_username = "ovirt"
+db_password = gets.chomp
+config_file.write "# postgres configuration\n"
+config_file.write "$db_username = '#{db_username}'\n"
+config_file.write "$db_password = '#{db_password}'\n\n"
+
+# FreeIPA Configuration
+config_file.write "# FreeIPA configuration\n"
+puts "Enter your realm name (example.com)"
+realm_name = gets.chomp
+config_file.write "$realm_name = '#{realm_name}'\n"
+puts "Enter an administrator password for FreeIPA"
+freeipa_password = gets.chomp
+config_file.write "$freeipa_password = '#{freeipa_password}'\n"
+ldap_dn = "cn=ipaConfig,cn=etc,"
+ldap_dn_temp = realm_name.split(".")
+ldap_dn_temp.each do |i|
+ldap_dn += "dc=#{i},"
+end
+ldap_dn = ldap_dn.chop
+config_file.write "$ldap_dn = #{ldap_dn}'\n\n"
+
+
+if cobbler_setup == "y"
+config_file.write "include cobbler::remote\n"
+elsif cobbler_setup == "n"
+config_file.write "include cobbler::bundled\n"
+end
+
+if dhcp_setup == "n"
+config_file.write "include dhcp::bundled\n"
+end
+
+if tftp_setup == "y"
+config_file.write "include tftp::bundled\n"
+end
+
+config_file.write "include freeipa::bundled\n"
+config_file.write "include ovirt::setup\n"
+

@@ -1,0 +1,19 @@
+---
+ ace-ovirt/modules/ovirt/manifests/postgres.pp |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/ace-ovirt/modules/ovirt/manifests/postgres.pp b/ace-ovirt/modules/ovirt/manifests/postgres.pp
+index 24806c8..ffefafa 100644
+--- a/ace-ovirt/modules/ovirt/manifests/postgres.pp
++++ b/ace-ovirt/modules/ovirt/manifests/postgres.pp
+@@ -46,7 +46,7 @@ class postgres::bundled{
+ 
+         single_exec {"create_ovirt_db":
+                 command => "/bin/su - postgres -c '/usr/bin/createdb ovirt'",
+-                require => Exec[initialize_db]
++                require => Exec[postgres_add_all_trust]
+         }
+ 
+         single_exec {"create_ovirt_development_db":
+-- 
+1.6.0.4
