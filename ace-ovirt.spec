@@ -8,7 +8,7 @@
 Summary: 			ACE oVirt Module
 Name: 				ace-ovirt
 Version: 			0.0.94
-Release: 			1%{?dist}
+Release: 			2%{?dist}
 Group: 				Applications/Internet
 License: 			LGPLv2+
 BuildArch:                      noarch
@@ -18,6 +18,7 @@ BuildRoot: 			%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires:	ruby(abi) = 1.8
 Requires: 	ace
 Requires: 	ace-postgres
+Requires:       hal
 
 %description
 oVirt ACE module

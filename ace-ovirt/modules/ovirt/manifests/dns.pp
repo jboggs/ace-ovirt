@@ -28,8 +28,12 @@ define dns::bundled($mgmt_ipaddr="", $prov_ipaddr="") {
 	service {"dnsmasq" :
                 ensure => running,
                 enable => true,
-		require => File["/etc/dnsmasq.d/ovirt-dns.conf"]
+		require => [File["/etc/dnsmasq.d/ovirt-dns.conf"]Exec[set_selinux_permissive]]
         }
+
+	exec {"set_selinux_permissive":
+		command => "/usr/sbin/setenforce 0"
+	}
 
         file {"/etc/dnsmasq.d/ovirt-dns.conf":
                 content => template("ovirt/ovirt-dns.conf.erb"),

@@ -27,6 +27,9 @@ config_file.write "import 'ovirt'\n"
 config_file.write "import 'firewall'\n\n"
 config_file.write "firewall::setup{'setup': status => 'disabled'}\n\n"
 
+mgmt_dev = ""
+prov_dev = ""
+
 dev_ct = 0
 net_devs = `hal-find-by-capability --capability net`
 net_devs.each_line{ |dev|
@@ -61,23 +64,32 @@ puts "Do you want separate management and provisioning networks? (y/n)"
 end
 
 if sep_networks == "y"
+while mgmt_dev == ""
 puts "Input your management interface (eth0)"
 mgmt_dev = gets.chomp
+end
 
+while prov_dev == ""
 puts "Input your provisioning interface, this may also be your management interface (eth1)"
 prov_dev = gets.chomp
+end
 
 elsif sep_networks == "n"
+while mgmt_dev == ""
 puts "Input your management/provisioning interface (eth1)"
 mgmt_dev = gets.chomp
 prov_dev = mgmt_dev
 end
+end
 
 elsif dev_ct == 1
+while mgmt_dev == ""
 puts "\nOnly one networking device detected"
 puts "Input your management/provisioning interface (eth1)"
 mgmt_dev = gets.chomp
 prov_dev = mgmt_dev
+puts "Need Management interface"
+end
 end
 
 puts "Enter the hostname of the oVirt management server (management.example.com)"
@@ -175,7 +187,6 @@ cobbler_setup = gets.chomp
 end
 
 cobbler_config = "n"
-
 
 if cobbler_setup == "y"
 puts "Enter the hostname of your cobbler server"
