@@ -18,19 +18,7 @@
 # Author: Joey Boggs <jboggs@redhat.com>
 #--
 
-class dhcp::bundled { ($dhcp_start="", $dhcp_stop="", $dhcp_network="", $dhcp_domain="")
-
-
-	package {"dnsmasq":
-		ensure => installed,
-		require => Single_exec["add_dns_server_to_resolv.conf"]
-	}
-
-	service {"dnsmasq" :
-                ensure => running,
-                enable => true,
-		require => File["/etc/dnsmasq.d/ovirt-dhcp.conf"]
-        }
+class dhcp::bundled {
 
         file {"/etc/dnsmasq.d/ovirt-dhcp.conf":
                 content => template("ovirt/ovirt-dhcp.conf.erb"),
@@ -41,7 +29,6 @@ class dhcp::bundled { ($dhcp_start="", $dhcp_stop="", $dhcp_network="", $dhcp_do
 
 	single_exec {"dns_entries":
                 command => "/usr/share/ace/modules/ovirt/files/dns_entries.sh $dhcp_start $dhcp_stop $dhcp_network $dhcp_domain",
-		require => Single_exec["add_dns_server_to_etc_hosts"]
 	}
 
 }

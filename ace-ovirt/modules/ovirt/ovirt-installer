@@ -33,16 +33,11 @@ net_devs.each_line{ |dev|
 dev_ct = dev_ct + 1
 }
 
-if dev_ct <= 2 
+if dev_ct == 0
 puts "Unable to install without a network interface"
 exit
 
-elsif dev_ct == 3
-puts "Only 1 network devices detected, defaulting to eth0 for management and provisioning"
-mgmt_dev = "eth0"
-prov_dev = "eth0"
-
-elsif dev_ct > 3
+else
 puts ""
 get_net_devs = `hal-find-by-capability --capability net`
 puts "Below are the detected networking devices\n\n"
@@ -57,6 +52,7 @@ puts mac.chop + "   :   " + interface.chop   +  "    :    " + ipaddr.to_s if int
 }
 end
 
+if dev_ct > 1
 puts "\nDo you want separate management and provisioning networks? (y/n)"
 sep_networks = gets.chomp
 while sep_networks != "y" and sep_networks != "n"
@@ -72,6 +68,13 @@ puts "Input your provisioning interface, this may also be your management interf
 prov_dev = gets.chomp
 
 elsif sep_networks == "n"
+puts "Input your management/provisioning interface (eth1)"
+mgmt_dev = gets.chomp
+prov_dev = mgmt_dev
+end
+
+elsif dev_ct == 1
+puts "\nOnly one networking device detected"
 puts "Input your management/provisioning interface (eth1)"
 mgmt_dev = gets.chomp
 prov_dev = mgmt_dev
@@ -93,7 +96,7 @@ puts "Invalid choice"
 dns_servers = gets.chomp
 end
 
-mgmt_ip = `ifconfig #{prov_dev}`
+mgmt_ip = `ifconfig #{mgmt_dev}`
 mgmt_ipaddr= mgmt_ip.scan(/\s*inet addr:([\d.]+)/)
 prov_ip = `ifconfig #{prov_dev}`
 prov_ipaddr= prov_ip.scan(/\s*inet addr:([\d.]+)/)
@@ -104,7 +107,7 @@ config_file.write "$mgmt_ipaddr = '#{mgmt_ipaddr}'\n"
 config_file.write "$prov_ipaddr = '#{prov_ipaddr}'\n"
 config_file.write "$ovirt_host = '#{ovirt_host}'\n"
 config_file.write "$ipa_host = '#{ipa_host}'\n\n"
-config_file.write "dns::bundled{setup: mgmt_ipaddr=>'$mgmt_ipaddr', prov_ipaddr=> '$prov_ipaddr'}\n\n"
+config_file.write "dns::bundled{setup: mgmt_ipaddr=> $mgmt_ipaddr, prov_ipaddr=> $prov_ipaddr}\n\n"
 end
 
 if dns_servers == "y"
@@ -154,7 +157,7 @@ tftp_setup = gets.chomp
 if sep_networks == "y"
 prov_ip = `ifconfig #{prov_dev}`
 prov_dns_server = prov_ip.scan(/\s*inet addr:([\d.]+)/)
-config_file.write "$prov_dns_server = '#{prov_dns_server}'"
+config_file.write "$prov_dns_server = '#{prov_dns_server}'\n"
 
 puts "Enter the network gateway for your provisioning network (192.168.50.254)"
 prov_network_gateway = gets.chomp
@@ -219,7 +222,7 @@ ldap_dn_temp.each do |i|
 ldap_dn += "dc=#{i},"
 end
 ldap_dn = ldap_dn.chop
-config_file.write "$ldap_dn = #{ldap_dn}'\n\n"
+config_file.write "$ldap_dn = '#{ldap_dn}'\n\n"
 
 
 if cobbler_setup == "y"
@@ -236,6 +239,7 @@ if tftp_setup == "y"
 config_file.write "include tftp::bundled\n"
 end
 
+config_file.write "include postgres::bundled\n"
 config_file.write "include freeipa::bundled\n"
 config_file.write "include ovirt::setup\n"
-
+config_file.close

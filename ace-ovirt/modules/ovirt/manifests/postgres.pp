@@ -25,7 +25,6 @@ class postgres::bundled{
         
 	package {"postgresql-server":
                 ensure => installed,
-		require => Exec[ovirt_hostname_check]
         }
         package {"ace-postgres":
 		ensure => installed,
@@ -41,7 +40,7 @@ class postgres::bundled{
         service {"postgresql" :
 		ensure => running,
 		enable => true,
-		require => Exec[initialize_db]
+		require => Single_exec[initialize_db]
         }
 
         single_exec {"create_ovirt_db":
@@ -68,7 +67,7 @@ class postgres::bundled{
 
 	exec {"postgres_add_all_trust":
                 command => "/bin/echo 'local all all trust' > /var/lib/pgsql/data/pg_hba.conf",
-		require => Exec[initialize_db],
+		require => Single_exec[initialize_db],
 		notify => Service[postgresql]
         }      
 

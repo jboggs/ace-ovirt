@@ -18,7 +18,7 @@
 # Author: Joey Boggs <jboggs@redhat.com>
 #--
 
-class dns::bundled { (mgmt_ipaddr="", prov_ipaddr="")
+define dns::bundled($mgmt_ipaddr="", $prov_ipaddr="") {
 
 	package {"dnsmasq":
 		ensure => installed,
@@ -40,7 +40,7 @@ class dns::bundled { (mgmt_ipaddr="", prov_ipaddr="")
 
 	single_exec {"add_dns_server_to_resolv.conf":
 		command => "/bin/sed -e '1i nameserver $prov_ipaddr' -i /etc/resolv.conf",
-		require => Single_exec["add_dns_server_to_etc_hosts"]
+		require => Single_exec["add_mgmt_server_to_etc_hosts"]
 	}
 
 	single_exec {"add_mgmt_server_to_etc_hosts":

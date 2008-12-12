@@ -73,7 +73,7 @@ class freeipa::bundled{
         }
 
         single_exec {"ipa_add_ovirtadmin_user":
-                command => "/usr/sbin/ipa-adduser -f Ovirt -l Admin -p $password ovirtadmin",
+                command => "/usr/sbin/ipa-adduser -f Ovirt -l Admin -p $freeipa_password ovirtadmin",
                 require => Single_exec[ipa_modify_username_length]
         }
 

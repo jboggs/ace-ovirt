@@ -20,16 +20,6 @@
 
 class tftp::bundled {
 
-	package {"dnsmasq":
-		ensure => installed,
-	}
-
-	service {"dnsmasq" :
-                ensure => running,
-                enable => true,
-		require => File["/etc/dnsmasq.d/ovirt-tftp.conf"]
-        }
-
         file {"/etc/dnsmasq.d/ovirt-tftp.conf":
                 content => template("ovirt/ovirt-tftp.conf.erb"),
                 mode => 644,
