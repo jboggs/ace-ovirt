@@ -28,7 +28,7 @@ define dns::bundled($mgmt_ipaddr="", $prov_ipaddr="") {
 	service {"dnsmasq" :
                 ensure => running,
                 enable => true,
-		require => [File["/etc/dnsmasq.d/ovirt-dns.conf"]Exec[set_selinux_permissive]]
+		require => [File["/etc/dnsmasq.d/ovirt-dns.conf"],Exec["set_selinux_permissive"]]
         }
 
 	exec {"set_selinux_permissive":
@@ -49,6 +49,13 @@ define dns::bundled($mgmt_ipaddr="", $prov_ipaddr="") {
 
 	single_exec {"add_mgmt_server_to_etc_hosts":
 		command => "/bin/echo $mgmt_ipaddr $ipa_host >> /etc/hosts",
+		notify => Service[dnsmasq]
+	}
+
+	file_replacement{"dnsmasq_configdir":
+		file => "/etc/dnsmasq.conf",
+		pattern => "^#conf-dir=*$",
+	        replacement => "conf-dir=/etc/dnsmasq.d",
 		notify => Service[dnsmasq]
 	}
 }

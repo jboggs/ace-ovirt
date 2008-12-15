@@ -51,7 +51,7 @@ class freeipa::bundled{
         }
 
         single_exec {"ipa_server_install":
-                command => "/usr/sbin/ipa-server-install -r $realm_name -p $freeipa_password -P $freeipa_password -a $freeipa_password --hostname $fqdn -u dirsrv -U",
+                command => "/usr/sbin/ipa-server-install -r $realm_name -p $freeipa_password -P $freeipa_password -a $freeipa_password --hostname $ipa_host -u dirsrv -U",
                 require => Exec[set_kdc_defaults]
         }
 

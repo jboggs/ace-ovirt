@@ -22,6 +22,13 @@
 
 require 'socket'
 
+sestatus = `/usr/sbin/sestatus`
+if sestatus !~ /(permissive|disabled)/
+puts "SELinux enabled, please disable or set in permissive mode permanently by editing"
+puts "/etc/selinux/config and rebooting"
+exit
+end
+
 config_file = File.new("/usr/share/ace/modules/ovirt/ovirt-install.pp", "w")
 config_file.write "import 'ovirt'\n"
 config_file.write "import 'firewall'\n\n"
@@ -65,18 +72,18 @@ end
 
 if sep_networks == "y"
 while mgmt_dev == ""
-puts "Input your management interface (eth0)"
+puts "Input your management interface (example: eth0)"
 mgmt_dev = gets.chomp
 end
 
 while prov_dev == ""
-puts "Input your provisioning interface, this may also be your management interface (eth1)"
+puts "Input your provisioning interface, this may also be your management interface (example: eth1)"
 prov_dev = gets.chomp
 end
 
 elsif sep_networks == "n"
 while mgmt_dev == ""
-puts "Input your management/provisioning interface (eth1)"
+puts "Input your management/provisioning interface (example: eth1)"
 mgmt_dev = gets.chomp
 prov_dev = mgmt_dev
 end
@@ -85,14 +92,14 @@ end
 elsif dev_ct == 1
 while mgmt_dev == ""
 puts "\nOnly one networking device detected"
-puts "Input your management/provisioning interface (eth1)"
+puts "Input your management/provisioning interface (example: eth1)"
 mgmt_dev = gets.chomp
 prov_dev = mgmt_dev
 puts "Need Management interface"
 end
 end
 
-puts "Enter the hostname of the oVirt management server (management.example.com)"
+puts "Enter the hostname of the oVirt management server (example: management.example.com)"
 ovirt_host = gets.chomp
 ipa_host = ovirt_host
 
@@ -145,19 +152,19 @@ config_file.write "# dhcp configuration\n"
 dhcp_interface = prov_dev
 config_file.write "$dhcp_interface = '#{dhcp_interface}'\n"
 
-puts "Enter the first 3 octets of the dhcp network you wish to use (192.168.50)"
+puts "Enter the first 3 octets of the dhcp network you wish to use (example: 192.168.50)"
 dhcp_network = gets.chomp
 config_file.write "$dhcp_network = '#{dhcp_network}'\n"
 
-puts "Enter the dhcp pool start address (3)"
+puts "Enter the dhcp pool start address (example: 3)"
 dhcp_start = gets.chomp
 config_file.write "$dhcp_start = '#{dhcp_start}'\n"
 
-puts "Enter the dhcp pool end addess (100)"
+puts "Enter the dhcp pool end addess (example: 100)"
 dhcp_stop = gets.chomp
 config_file.write "$dhcp_stop = '#{dhcp_stop}'\n"
 
-puts "Enter the dhcp domain you wish to use (example.com)"
+puts "Enter the dhcp domain you wish to use (example: example.com)"
 dhcp_domain = gets.chomp
 config_file.write "$dhcp_domain = '#{dhcp_domain}'\n"
 
@@ -171,7 +178,7 @@ prov_ip = `ifconfig #{prov_dev}`
 prov_dns_server = prov_ip.scan(/\s*inet addr:([\d.]+)/)
 config_file.write "$prov_dns_server = '#{prov_dns_server}'\n"
 
-puts "Enter the network gateway for your provisioning network (192.168.50.254)"
+puts "Enter the network gateway for your provisioning network (example: 192.168.50.254)"
 prov_network_gateway = gets.chomp
 config_file.write "$prov_network_gateway = '#{prov_network_gateway}'\n"
 end
@@ -221,7 +228,7 @@ config_file.write "$db_password = '#{db_password}'\n\n"
 
 # FreeIPA Configuration
 config_file.write "# FreeIPA configuration\n"
-puts "Enter your realm name (example.com)"
+puts "Enter your realm name (example: example.com)"
 realm_name = gets.chomp
 config_file.write "$realm_name = '#{realm_name}'\n"
 puts "Enter an administrator password for FreeIPA"

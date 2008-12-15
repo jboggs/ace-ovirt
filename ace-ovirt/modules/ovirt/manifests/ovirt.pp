@@ -29,10 +29,6 @@ class ovirt::setup {
 	        ensure => installed;
 	}
 	
-	package {"libvirt":
-  	      ensure => installed;
-	}
-
 	package {"rubygem-rake":
 		ensure => installed;
 	}
@@ -45,13 +41,13 @@ class ovirt::setup {
 		ensure => installed;
 	}
 
+	package {"libvirt":
+	        ensure => installed;
+	}	
+
 	package {"ntp":
 	        ensure => installed;
 	}
-
-	package {"ntpdate":
-  	      ensure => installed;
-        }
 
 	file {"/etc/collectd.conf":
 		source => "puppet:///ovirt/collectd.conf",
@@ -91,6 +87,11 @@ class ovirt::setup {
                 ensure => running
         }
 
+	service {"libvirt" :
+                enable => false,
+                require => Package[libvirt],
+        }
+
         service {"ovirt-host-browser" :
                 enable => true,
 		require => [Package[ovirt-server],Single_Exec[db_migrate]],
@@ -122,12 +123,6 @@ class ovirt::setup {
                 ensure => running
         }
 
-	service {"libvirtd" :
-                enable => true,
-		require => Package[libvirt],
-		ensure => running
-        }
-
         service {"qpidd" :
                 enable => true,
                 ensure => running,
@@ -139,12 +134,6 @@ class ovirt::setup {
                 ensure => running,
                 require => Package[collectd]
                 }
-
-	service {"ntpdate" :
-		enable => true,
-		ensure => running,
-		require => Package[ntpdate]
-		}
 
 	service {"ntpd" :
                 enable => true,
