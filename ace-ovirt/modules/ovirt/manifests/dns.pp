@@ -18,7 +18,9 @@
 # Author: Joey Boggs <jboggs@redhat.com>
 #--
 
-define dns::bundled($mgmt_ipaddr="", $prov_ipaddr="") {
+import 'augeas'
+
+define dns::bundled($mgmt_ipaddr="", $prov_ipaddr="",$mgmt_dev="",$prov_dev="") {
 
 	package {"dnsmasq":
 		ensure => installed,
@@ -28,12 +30,8 @@ define dns::bundled($mgmt_ipaddr="", $prov_ipaddr="") {
 	service {"dnsmasq" :
                 ensure => running,
                 enable => true,
-		require => [File["/etc/dnsmasq.d/ovirt-dns.conf"],Exec["set_selinux_permissive"]]
+		require => File["/etc/dnsmasq.d/ovirt-dns.conf"]
         }
-
-	exec {"set_selinux_permissive":
-		command => "/usr/sbin/setenforce 0"
-	}
 
         file {"/etc/dnsmasq.d/ovirt-dns.conf":
                 content => template("ovirt/ovirt-dns.conf.erb"),
@@ -58,6 +56,15 @@ define dns::bundled($mgmt_ipaddr="", $prov_ipaddr="") {
 	        replacement => "conf-dir=/etc/dnsmasq.d",
 		notify => Service[dnsmasq]
 	}
+
+	$net_changes = [
+    	"set /files/etc/sysconfig/network-scripts/ifcfg-${mgmt_dev}/PEERDNS no",
+	"set /files/etc/sysconfig/network-scripts/ifcfg-${prov_dev}/DNS1 $prov_ipaddr"
+	]
+
+	augeas {"network_scripts":
+		changes => $net_changes,
+		}
 }
 
 class dns::remote {

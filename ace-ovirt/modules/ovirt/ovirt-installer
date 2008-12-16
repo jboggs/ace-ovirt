@@ -126,7 +126,7 @@ config_file.write "$mgmt_ipaddr = '#{mgmt_ipaddr}'\n"
 config_file.write "$prov_ipaddr = '#{prov_ipaddr}'\n"
 config_file.write "$ovirt_host = '#{ovirt_host}'\n"
 config_file.write "$ipa_host = '#{ipa_host}'\n\n"
-config_file.write "dns::bundled{setup: mgmt_ipaddr=> $mgmt_ipaddr, prov_ipaddr=> $prov_ipaddr}\n\n"
+config_file.write "dns::bundled{setup: mgmt_ipaddr=> $mgmt_ipaddr, prov_ipaddr=> $prov_ipaddr, mgmt_dev =>$mgmt_dev, prov_dev => $prov_dev}\n\n"
 end
 
 if dns_servers == "y"

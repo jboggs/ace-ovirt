@@ -60,16 +60,8 @@ class freeipa::bundled{
                 require => Single_Exec[ipa_server_install]
         }
 
-	file_replacement{"ldapmodify_username_length":
-               file => "/usr/share/ace/modules/ovirt/files/ldapuserlength.sh",
-               pattern => "DN",
-               replacement => "$ldap_dn",
-               require => Exec[get_krb5_tkt]
-        }
-
         single_exec {"ipa_modify_username_length":
-               command => "/bin/sh /usr/share/ace/modules/ovirt/files/ldapuserlength.sh $host_name",
-               require => File_replacement[ldapmodify_username_length]
+               command => "/usr/sbin/ipa-defaultoptions --maxusername=12",
         }
 
         single_exec {"ipa_add_ovirtadmin_user":
