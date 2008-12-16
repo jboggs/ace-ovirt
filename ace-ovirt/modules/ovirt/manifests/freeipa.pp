@@ -20,10 +20,14 @@
 
 class freeipa::bundled{
 
-       package {"ipa-server":
+	package {"ipa-server":
                 ensure => installed,
-		require => Exec[db_exists_file]
+		require => [Exec[db_exists_file],Single_exec["set_hostname"]]
         }
+
+	single_exec {"set_hostname":
+		command => "/bin/hostname $ipa_host",
+	}
 
         exec {"set_kdc_defaults":
                 command => "/bin/sed -i '/\[kdcdefaults\]/a \ kdc_ports = 88' /usr/share/ipa/kdc.conf.template",
@@ -50,9 +54,13 @@ class freeipa::bundled{
                notify => Service[httpd]
         }
 
+	single_exec {"dnsmasq_restart":
+		command => "/etc/init.d/dnsmasq restart"
+	}
+
         single_exec {"ipa_server_install":
                 command => "/usr/sbin/ipa-server-install -r $realm_name -p $freeipa_password -P $freeipa_password -a $freeipa_password --hostname $ipa_host -u dirsrv -U",
-                require => Exec[set_kdc_defaults]
+                require => [Exec[set_kdc_defaults],Single_exec[dnsmasq_restart]]
         }
 
         exec {"get_krb5_tkt":

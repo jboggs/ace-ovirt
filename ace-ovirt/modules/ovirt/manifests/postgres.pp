@@ -19,6 +19,7 @@
 #--
 
 import "postgres"
+import "appliance_base/single_exec.pp"
 
 class postgres::bundled{
 
@@ -44,13 +45,15 @@ class postgres::bundled{
         }
 
         single_exec {"create_ovirt_db":
-        	command => "/bin/su - postgres -c '/usr/bin/createdb ovirt'",
-		require => [Exec[postgres_add_all_trust], Service[postgresql]]
-	}
+		command => "/usr/bin/createdb ovirt",
+		require => [Exec[postgres_add_all_trust], Service[postgresql]],
+		user => "postgres"
+        }
 
 	single_exec {"create_ovirt_development_db":
-                command => "/bin/su - postgres -c '/usr/bin/createdb ovirt_development'",
-		require => [Exec[postgres_add_all_trust], Service[postgresql]]
+                command => "/usr/bin/createdb ovirt_development",
+                require => [Exec[postgres_add_all_trust], Service[postgresql]],
+                user => "postgres"
         }
 
 	postgres_execute_command {"ovirt_db_create_role":

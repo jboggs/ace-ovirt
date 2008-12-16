@@ -18,13 +18,13 @@
 # Author: Joey Boggs <jboggs@redhat.com>
 #--
 
-import 'augeas'
 
 define dns::bundled($mgmt_ipaddr="", $prov_ipaddr="",$mgmt_dev="",$prov_dev="") {
 
 	package {"dnsmasq":
 		ensure => installed,
-		require => Single_exec["add_dns_server_to_resolv.conf"]
+		require => [Single_exec["add_dns_server_to_resolv.conf"],File_replacement["dnsmasq_configdir"],
+		File["/etc/dnsmasq.d/ovirt-dns.conf"],File_replacement ["dnsmasq_configdir"]]
 	}
 
 	service {"dnsmasq" :
@@ -37,21 +37,17 @@ define dns::bundled($mgmt_ipaddr="", $prov_ipaddr="",$mgmt_dev="",$prov_dev="") 
                 content => template("ovirt/ovirt-dns.conf.erb"),
                 mode => 644,
 		notify => Service[dnsmasq],
-		require => Package[dnsmasq]
+		#require => Package[dnsmasq]
         }
 
 	single_exec {"add_dns_server_to_resolv.conf":
 		command => "/bin/sed -e '1i nameserver $prov_ipaddr' -i /etc/resolv.conf",
-		require => [Single_exec["add_mgmt_server_to_etc_hosts"],Exec["set_hostname"]]
+		require => [Single_exec["add_mgmt_server_to_etc_hosts"],Single_exec["set_hostname"]]
 	}
 
-	exec {"add_mgmt_server_to_etc_hosts":
+	single_exec {"add_mgmt_server_to_etc_hosts":
 		command => "/bin/echo $mgmt_ipaddr $ipa_host >> /etc/hosts",
 		notify => Service[dnsmasq]
-	}
-
-	single_exec {"set_hostname":
-		command => "/bin/hostname $ipa_host",
 	}
 
 	file_replacement {"dnsmasq_configdir":
@@ -61,14 +57,10 @@ define dns::bundled($mgmt_ipaddr="", $prov_ipaddr="",$mgmt_dev="",$prov_dev="") 
 		notify => Service[dnsmasq]
 	}
 
-	$net_changes = [
-    	"set /files/etc/sysconfig/network-scripts/ifcfg-${mgmt_dev}/PEERDNS no",
-	"set /files/etc/sysconfig/network-scripts/ifcfg-${prov_dev}/DNS1 $prov_ipaddr"
-	]
-
-	augeas {"network_scripts":
-		changes => $net_changes,
+	single_exec {"dhclient_config":
+		command => "/bin/echo 'prepend domain-name-servers $prov_ipaddr;' >> /etc/dhclient.conf" 
 	}
+
 }
 
 class dns::remote {
