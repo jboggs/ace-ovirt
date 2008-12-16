@@ -61,7 +61,8 @@ class freeipa::bundled{
         }
 
         single_exec {"ipa_modify_username_length":
-               command => "/usr/sbin/ipa-defaultoptions --maxusername=12",
+		command => "/usr/sbin/ipa-defaultoptions --maxusername=12",
+		require => Exec["get_krb5_tkt"]
         }
 
         single_exec {"ipa_add_ovirtadmin_user":
