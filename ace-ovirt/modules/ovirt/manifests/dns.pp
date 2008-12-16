@@ -42,15 +42,19 @@ define dns::bundled($mgmt_ipaddr="", $prov_ipaddr="",$mgmt_dev="",$prov_dev="") 
 
 	single_exec {"add_dns_server_to_resolv.conf":
 		command => "/bin/sed -e '1i nameserver $prov_ipaddr' -i /etc/resolv.conf",
-		require => Single_exec["add_mgmt_server_to_etc_hosts"]
+		require => [Single_exec["add_mgmt_server_to_etc_hosts"],Exec["set_hostname"]]
 	}
 
-	single_exec {"add_mgmt_server_to_etc_hosts":
+	exec {"add_mgmt_server_to_etc_hosts":
 		command => "/bin/echo $mgmt_ipaddr $ipa_host >> /etc/hosts",
 		notify => Service[dnsmasq]
 	}
 
-	file_replacement{"dnsmasq_configdir":
+	single_exec {"set_hostname":
+		command => "/bin/hostname $ipa_host",
+	}
+
+	file_replacement {"dnsmasq_configdir":
 		file => "/etc/dnsmasq.conf",
 		pattern => "^#conf-dir=*$",
 	        replacement => "conf-dir=/etc/dnsmasq.d",
@@ -64,7 +68,7 @@ define dns::bundled($mgmt_ipaddr="", $prov_ipaddr="",$mgmt_dev="",$prov_dev="") 
 
 	augeas {"network_scripts":
 		changes => $net_changes,
-		}
+	}
 }
 
 class dns::remote {
