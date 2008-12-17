@@ -22,11 +22,13 @@
 
 require 'socket'
 
+if File.exist?("/usr/sbin/sestatus")
 sestatus = `/usr/sbin/sestatus`
 if sestatus !~ /(Current mode:                   permissive|Current mode:                   disabled|SELinux status:                 disabled|SELinux status:                 permissive)/
 puts "SELinux enabled, please disable or set in permissive mode permanently by editing"
 puts "/etc/selinux/config and rebooting"
 exit
+end
 end
 
 config_file = File.new("/usr/share/ace/modules/ovirt/ovirt-install.pp", "w")
@@ -68,6 +70,7 @@ sep_networks = gets.chomp
 while sep_networks != "y" and sep_networks != "n"
 puts "Invalid choice"
 puts "Do you want separate management and provisioning networks? (y/n)"
+sep_networks = gets.chomp
 end
 
 if sep_networks == "y"
