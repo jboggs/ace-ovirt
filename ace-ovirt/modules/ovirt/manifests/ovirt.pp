@@ -61,9 +61,9 @@ class ovirt::setup {
 
 	single_exec { "db_migrate" :
 		cwd => "/usr/share/ovirt-server/",
-		path => ["/bin"],
-		command => "export RAILS_ENV='production' && /usr/bin/rake db:migrate",
-		require => [File["/usr/share/ovirt-server/log"],Package[ovirt-server],Package[rubygem-rake]]
+		command => "/usr/bin/rake db:migrate",
+		require => [File["/usr/share/ovirt-server/log"],Package[ovirt-server],Package[rubygem-rake]],
+        environment => "RAILS_ENV=production"
 	}
 
 	file { "/usr/share/ovirt-server/log" :
@@ -98,12 +98,6 @@ class ovirt::setup {
                 ensure => running
         }
  
-        service {"ovirt-host-status" :
-                enable => true,
-		require => [Package[ovirt-server],Single_Exec[db_migrate]],
-                ensure => running
-	}
-
         service {"ovirt-host-collect" :
                 enable => true,
 		require => [Package[ovirt-server],Single_Exec[db_migrate]],
