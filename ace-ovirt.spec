@@ -8,7 +8,7 @@
 Summary: 			ACE oVirt Module
 Name: 				ace-ovirt
 Version: 			0.0.94
-Release: 			14%{?dist}
+Release: 			15%{?dist}
 Group: 				Applications/Internet
 License: 			LGPLv2+
 BuildArch:                      noarch
@@ -44,7 +44,7 @@ install -d %{buildroot}/%{acehome}
 install -d %{buildroot}/%{ruby_sitelibdir}
 install -d %{buildroot}/%{_bindir}
 install -d %{buildroot}/%{_initrddir}
-cp -pr %{pbuild}/modules %{buildroot}/%{acehome}
+cp -pr %{pbuild}/ace-ovirt/modules %{buildroot}/%{acehome}
 
 
 
