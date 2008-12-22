@@ -80,6 +80,10 @@ class ovirt::setup {
 		command => "/usr/bin/ovirt-add-host $ipa_host /usr/share/ovirt-server/ovirt.keytab",
 		require => Package[ovirt-server]
 	}	
+    
+	exec { "disable_selinux" : 
+		command => "/usr/sbin/lokkit --selinux=disabled"
+	}	    
  
 	service {"httpd" :
                 enable => true,
