@@ -18,6 +18,7 @@
 # Author: Joey Boggs <jboggs@redhat.com>
 #--
 
+# common featues
 define dns::common($mgmt_ipaddr="", $prov_ipaddr="",$mgmt_dev="",$prov_dev="") {
 
     package {"dnsmasq":
