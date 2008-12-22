@@ -47,8 +47,8 @@ define dns::common($mgmt_ipaddr="", $prov_ipaddr="",$mgmt_dev="",$prov_dev="") {
 
     file_replacement {"dnsmasq_configdir":
         file => "/etc/dnsmasq.conf",
-	pattern => "^#conf-dir=/etc/dnsmasq.d$"
-	replacement => "conf-dir=/etc/dnsmasq.d",
+        pattern => "^#conf-dir=*$",
+        replacement => "conf-dir=/etc/dnsmasq.d",
         notify => Service[dnsmasq],
         require => Package["dnsmasq"]
     }
