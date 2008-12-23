@@ -40,10 +40,18 @@ class ovirt::setup {
 	package {"collectd":
 		ensure => installed;
 	}
+    
+	package {"collectd-rrdtool":
+		ensure => installed;
+	}    
 
 	package {"libvirt":
 	        ensure => installed;
 	}	
+    
+	package {"ruby-qpid":
+	        ensure => installed;
+	}	    
 
 	package {"ntp":
 	        ensure => installed;
@@ -51,7 +59,8 @@ class ovirt::setup {
 
 	file {"/etc/collectd.conf":
 		source => "puppet:///ovirt/collectd.conf",
-		notify => Service[collectd]
+		notify => Service[collectd],
+        require => Package["collectd-rrdtool"]
 	}
 
 	file {"/etc/qpidd.conf":
@@ -62,7 +71,7 @@ class ovirt::setup {
 	single_exec { "db_migrate" :
 		cwd => "/usr/share/ovirt-server/",
 		command => "/usr/bin/rake db:migrate",
-		require => [File["/usr/share/ovirt-server/log"],Package[ovirt-server],Package[rubygem-rake]],
+		require => [File["/usr/share/ovirt-server/log"],Package[ovirt-server],Package[rubygem-rake],Postgres_execute_command["ovirt_db_grant_permissions"]],
         environment => "RAILS_ENV=production"
 	}
 
@@ -82,7 +91,8 @@ class ovirt::setup {
 	}	
     
 	exec { "disable_selinux" : 
-		command => "/usr/sbin/lokkit --selinux=disabled"
+		command => "/usr/sbin/lokkit --selinux=disabled",
+        require => Package["ovirt-server"]
 	}	    
  
 	service {"httpd" :

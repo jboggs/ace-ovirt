@@ -55,7 +55,8 @@ class freeipa::bundled{
         }
 
 	single_exec {"dnsmasq_restart":
-		command => "/etc/init.d/dnsmasq restart"
+		command => "/etc/init.d/dnsmasq restart",
+        require => Service["dnsmasq"]
 	}
 
         single_exec {"ipa_server_install":

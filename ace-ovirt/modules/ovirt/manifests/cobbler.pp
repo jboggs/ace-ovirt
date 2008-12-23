@@ -83,7 +83,7 @@ class cobbler::bundled {
 		notify => Service[cobblerd],
 		require => Package[cobbler]
 	}
-
+     
 	file_replacement{"settings_xml_rpc":
 		file => "/etc/cobbler/settings",
 		pattern	=> "xmlrpc_rw_enabled: 0",
@@ -97,6 +97,12 @@ class cobbler::bundled {
 		enable => true,
 		require => File_replacement[settings_ip_address]
 	}
+
+    file {"/etc/cobbler/modules.conf":
+        source => "puppet:///ovirt/modules.conf",
+        notify	 	=> Service[cobblerd],
+        require => Package["cobbler"]
+    }        
 
 #       firewall_rule{"69": destination_port => "69"}
 #	firewall_rule{"25150": destination_port => "25150"}
@@ -112,8 +118,8 @@ class cobbler::remote {
         
 
         cobbler_user_config {"cobbler_remote_user":
-                user_name => "$cobbler_user_name",
-                user_password => "$cobbler_user_password",
+                cobbler_user_name => "$cobbler_user_name",
+                cobbler_user_password => "$cobbler_user_password",
                 cobbler_hostname => "$cobbler_hostname"
         }
 }
