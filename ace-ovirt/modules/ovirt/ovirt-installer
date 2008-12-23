@@ -238,7 +238,8 @@ config_file.write "# FreeIPA configuration\n"
 puts "Enter your realm name (example: example.com)"
 realm_name = gets.chomp
 config_file.write "$realm_name = '#{realm_name}'\n"
-puts "Enter an administrator password for FreeIPA"
+puts "\nEnter an administrator password for FreeIPA "
+puts "*** This will also be you ovirtadmin password for the web management login ***\n\n"
 freeipa_password = gets.chomp
 config_file.write "$freeipa_password = '#{freeipa_password}'\n"
 ldap_dn = "cn=ipaConfig,cn=etc,"
@@ -269,9 +270,4 @@ config_file.write "include freeipa::bundled\n"
 config_file.write "include ovirt::setup\n"
 config_file.close
 
-#puts "\n\n\n Install now? (y/n)"
-#install = gets.chomp
-#if install == "y"
-#`puppet -d /usr/share/ace/modules/ovirt/ovirt-install.pp --modulepath=/usr/share/ace/modules`
-#end
-
+puts "\n\nTo start the installation run:    ace install ovirt"
