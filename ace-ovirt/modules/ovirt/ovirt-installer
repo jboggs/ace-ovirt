@@ -21,6 +21,7 @@
 ## oVirt Installation Script
 
 require 'socket'
+require 'fileutils'
 
 if File.exist?("/usr/sbin/sestatus")
 sestatus = `/usr/sbin/sestatus`
@@ -31,7 +32,8 @@ exit
 end
 end
 
-config_file = File.new("/usr/share/ace/modules/ovirt/ovirt-install.pp", "w")
+FileUtils.mkdir_p("/usr/share/ace/appliances/ovirt")
+config_file = File.new("/usr/share/ace/appliances/ovirt/ovirt.pp", "w")
 config_file.write "import 'ovirt'\n"
 config_file.write "import 'firewall'\n\n"
 config_file.write "firewall::setup{'setup': status => 'disabled'}\n\n"
